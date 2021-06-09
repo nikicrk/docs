@@ -1,75 +1,303 @@
----
-title: About pull requests
-intro: 'Pull requests let you tell others about changes you''ve pushed to a branch in a repository on {% data variables.product.product_name %}. Once a pull request is opened, you can discuss and review the potential changes with collaborators and add follow-up commits before your changes are merged into the base branch.'
-redirect_from:
-  - /github/collaborating-with-issues-and-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests
-  - /articles/using-pull-requests/
-  - /articles/about-pull-requests
-  - /github/collaborating-with-issues-and-pull-requests/about-pull-requests
-versions:
-  free-pro-team: '*'
-  enterprise-server: '*'
-  github-ae: '*'
-topics:
-  - Pull requests
----
-### About pull requests
+ 
+# coding=utf-8
 
-{% note %}
+#
+# * RECODE? OKE GAK MASSALAH
+# * TAPI YA JANGAN DI JUAL KONTOL
+#
 
-**Note:** When working with pull requests, keep the following in mind:
-* If you're working in the [shared repository model](/articles/about-collaborative-development-models), we recommend that you use a topic branch for your pull request. While you can send pull requests from any branch or commit, with a topic branch you can push follow-up commits if you need to update your proposed changes.
-* When pushing commits to a pull request, don't force push. Force pushing can corrupt your pull request.
+############################################################
+# Name           : Moonton Account Checker                 #
+# File           : proxy.py                              #
+# Author         : Nikyi.py                                  #
+# Github         : https://github.com/nikicrk/FMBF                #
+# Facebook       :  https://www.facebook.com/Nikyi.py       #
+# Telegram       : https://t.me/DulLah                     #
+# Python version : 3.7++                                   #
+############################################################
 
-{% endnote %}
+import requests, os, shutil
+from bs4 import BeautifulSoup as bs
+from concurrent.futures import ThreadPoolExecutor
 
-After initializing a pull request, you'll see a review page that shows a high-level overview of the changes between your branch (the compare branch) and the repository's base branch. You can add a summary of the proposed changes, review the changes made by commits, add labels, milestones, and assignees, and @mention individual contributors or teams. For more information, see "[Creating a pull request](/articles/creating-a-pull-request)."
+try: shutil.rmtree(
+    'get_proxy/__pycache__'
+  )
+except: pass
 
-Once you've created a pull request, you can push commits from your topic branch to add them to your existing pull request. These commits will appear in chronological order within your pull request and the changes will be visible in the "Files changed" tab.
+proxy_list = []
+valid_proxy = []
 
-Other contributors can review your proposed changes, add review comments, contribute to the pull request discussion, and even add commits to the pull request.
+def prox():
+  print('''
+[1] Ambil proxy dari situs (free-proxy-list.com)
+[2] Ambil proxy dari situs (free-proxy-list.net)[\033[92mDisarankan\033[0m]
+[3] Dari file
+  ''')
+  ask = int(
+    input(
+      '[?] Chose: '
+    )
+  )
+  if ask == 1:
+    return proxy_com(
+    )
+  elif ask == 2:
+    return proxy_net(
+    )
+  elif ask == 3:
+    return from_file(
+    )
+  else:
+    exit(
+      '\n[!] Goblokk ajg, elu butaa yaaa?'
+    )
 
-{% if currentVersion == "free-pro-team@latest" %}
-You can see information about the branch's current deployment status and past deployment activity on the "Conversation" tab. For more information, see "[Viewing deployment activity for a repository](/articles/viewing-deployment-activity-for-your-repository)."
-{% endif %}
+def proxy_checker(prox):
+  try:
+    global valid_proxy
+    if requests.get(
+       'http://ip.ml.youngjoygame.com:30220/myip',
+          verify=False,
+          proxies=prox,
+          timeout=10
+        ).status_code == 200:
+      valid_proxy.append(
+        prox
+      )
+    print(
+      end='\r[+] Ditemukan (%s) proxy valid.'%(
+        len(
+          valid_proxy
+        )
+      ),
+      flush=True
+    )
+  except: pass
 
-After you're happy with the proposed changes, you can merge the pull request. If you're working in a shared repository model, you create a pull request and you, or someone else, will merge your changes from your feature branch into the base branch you specify in your pull request. For more information, see "[Merging a pull request](/articles/merging-a-pull-request)."
+def proxy_com():
+  limit = int(
+    input(
+      '[?] Limit (ex: 100): '
+    )
+  )
+  count = 1
+  stop = False
+  url = 'https://free-proxy-list.com?page=%s' %(
+    str(
+      count
+    )
+  )
+  while 1:
+    try:
+      found = False
+      r = requests.get(
+        url,
+        headers={'user-agent':'chrome'}
+      ).text
+      soup = bs(
+        r,
+        'html.parser'
+      )
+      for x in soup.find_all('a'):
+        if x.has_attr(
+          'alt'
+        ) == True:
+          proxy = (
+            x['alt']
+          )
+          found = True
+          proxy_list.append({
+            'http':'http://'+proxy.strip(),
+            'https':'https://'+proxy.strip()
+          }) if len(
+            proxy.strip().split(':')
+          ) == 2 else None
+          print(
+            end='\r[+] Mengambil (%s) proxy.'%(
+              len(proxy_list)
+            ),
+            flush=True
+          )
+          if len(
+            proxy_list
+          ) == limit or len(
+            proxy_list
+          ) > limit:
+            stop = True
+            break
+      if found == False:
+        print(
+          '\n[!] Hanya bisa mengambil (%s) proxy' %(
+            str(
+              len(
+                proxy_list
+              )
+            )
+          )
+        )
+        break
+      elif stop == False:
+        count+=1
+        url = 'https://free-proxy-list.com?page=%s' %(
+          str(
+            count
+          )
+        )
+      else:
+        break
+    except: pass
+  if len(
+    proxy_list
+  ) != 0:
+    print(
+      '\n[*] Mencari proxy valid'
+    )
+    with ThreadPoolExecutor(
+      max_workers=50
+      ) as thread:
+      [
+        thread.submit(
+          proxy_checker,(
+            prox
+          )
+        ) for prox in proxy_list
+      ]
+    if len(
+      valid_proxy
+    ) != 0:
+      print(
+        '\n'
+      )
+      return valid_proxy
+    else: exit(
+      '[!] Maaf tidak ada proxy yang valid silahkan coba lagi :('
+    )
+  else: exit(
+    '[!] Maaf proxy tidak ada :('
+  )
 
-{% data reusables.pull_requests.required-checks-must-pass-to-merge %}
+def proxy_net():
+  print(
+    '[*] Mencari proxy valid'
+  )
+  r = requests.get(
+    'https://free-proxy-list.net/',
+    headers={'user-agent':'chrome'}
+  ).text
+  soup = bs(
+    r,
+    'html.parser'
+  )
+  proxs = soup.find(
+    'textarea'
+  ).text.split(
+    '\n'
+  )
+  [
+    proxy_list.append({
+      'http':'http://'+e.strip(),
+      'https':'https://'+e.strip()
+    }) if len(
+      e.strip(
+      ).split(
+        ':'
+      )
+    ) == 2 else None for e in proxs
+  ]
+  if len(
+    proxy_list
+  ) != 0:
+    with ThreadPoolExecutor(
+      max_workers=50
+      ) as thread:
+      [
+        thread.submit(
+          proxy_checker,(
+            prox
+          )
+        ) for prox in proxy_list
+      ]
+    if len(
+      valid_proxy
+    ) != 0:
+      print(
+        '\n'
+      )
+      return valid_proxy
+    else: exit(
+      '[!] Maaf tidak ada proxy yang valid silahkan coba lagi :('
+    )
+  else: exit(
+    '[!] Maaf proxy tidak ada :('
+  )
 
-{% data reusables.pull_requests.close-issues-using-keywords %}
-
-{% tip %}
-
-**Tips:**
-- To toggle between collapsing and expanding all outdated review comments in a pull request, hold down <span class="platform-mac"><kbd>option</kbd></span><span class="platform-linux"><kbd>Alt</kbd></span><span class="platform-windows"><kbd>Alt</kbd></span> and click **Show outdated** or **Hide outdated**. For more shortcuts, see "[Keyboard shortcuts](/articles/keyboard-shortcuts)."
-- You can squash commits when merging a pull request to gain a more streamlined view of changes. For more information, see "[About pull request merges](/articles/about-pull-request-merges)."
-
-{% endtip %}
-
-You can visit your dashboard to quickly find links to recently updated pull requests you're working on or subscribed to. For more information, see "[About your personal dashboard](/articles/about-your-personal-dashboard)."
-
-### Draft pull requests
-
-{% data reusables.gated-features.draft-prs %}
-
-When you create a pull request, you can choose to create a pull request that is ready for review or a draft pull request. Draft pull requests cannot be merged, and code owners are not automatically requested to review draft pull requests. For more information about creating a draft pull request, see "[Creating a pull request](/articles/creating-a-pull-request)" and "[Creating a pull request from a fork](/articles/creating-a-pull-request-from-a-fork)."
-
-{% data reusables.pull_requests.mark-ready-review %} You can convert a pull request to a draft at any time. For more information, see "[Changing the stage of a pull request](/articles/changing-the-stage-of-a-pull-request)."
-
-### Differences between commits on compare and pull request pages
-
-The compare and pull request pages use different methods to calculate the diff for changed files:
-
-- Compare pages show the diff between the tip of the head ref and the current common ancestor (that is, the merge base) of the head and base ref. 
-- Pull request pages show the diff between the tip of the head ref and the common ancestor of the head and base ref at the time when the pull request was created. Consequently, the merge base used for the comparison might be different.
-
-### Further reading
-
-- "[Pull request](/articles/github-glossary/#pull-request)" in the {% data variables.product.prodname_dotcom %} glossary
-- "[About branches](/articles/about-branches)"
-- "[Commenting on a pull request](/articles/commenting-on-a-pull-request)"
-- "[Merging a pull request](/articles/merging-a-pull-request)"
-- "[Closing a pull request](/articles/closing-a-pull-request)"
-- "[Deleting unused branches](/articles/deleting-unused-branches)"
-- "[About pull request merges](/articles/about-pull-request-merges)"
+def from_file():
+  print(
+    '\n[!] Pemisah ip:port ex: 10.1.3:8080'
+  )
+  list = input(
+    '[?] List proxy (ex: proxy.txt): '
+  )
+  if os.path.exists(
+    list
+  ):
+    for data in open(
+      list,
+      'r',
+      encoding='utf-8'
+    ).readlines(
+      ):
+      prox = data.strip(
+      ).split(
+        ':'
+      )
+      try:
+        if prox[0] and prox[1]:
+          proxy_list.append({
+            'http': 'http://'+data.strip(),
+            'https': 'https://'+data.strip(),
+          })
+      except: pass
+    if len(
+      proxy_list
+    ) != 0:
+      print(
+        '[*] Total (%s) proxy' %(
+          str(
+            len(
+              proxy_list
+            )
+          )
+        )
+      )
+      print(
+        '[*] Mencari proxy valid'
+      )
+      with ThreadPoolExecutor(
+        max_workers=50
+      ) as thread:
+        [
+          thread.submit(
+            proxy_checker,(
+              prox
+            )
+          ) for prox in proxy_list
+        ]
+      if len(
+        valid_proxy
+      ) != 0:
+        print(
+          '\n'
+        )
+        return valid_proxy
+      else: exit(
+        '[!] Maaf tidak ada proxy yang valid silahkan coba lagi :('
+      )
+    else: exit(
+      '[!] Maaf proxy tidak ada :('
+    )
+  else: exit(
+    '[!] File tidak ditemukan "{0}"'.format(
+      list
+    
